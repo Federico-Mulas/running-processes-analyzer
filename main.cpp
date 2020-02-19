@@ -20,7 +20,7 @@ using namespace rpa;
 
 // static variables
 static const char *config_url =
-    "http://my-json-server.typicode.com/skatsev/testproject/posts/2";
+    "http://my-json-server.typicode.com/Federico-Mulas/running-processes-analyzer/applications/2";
 static constexpr chrono::seconds probe_frequency = 5s;
 static constexpr chrono::seconds config_probe_frequency = 3s;
 
@@ -37,7 +37,7 @@ void utilizationProber(atomic_flag &app_list_lock,
         while (parser) {
           info i = parser.line();
           for (const string &command : app_list) {
-            if (i.command == command)
+            if (end_with(i.command, command))
               std::cout << i.command << " " << i.pid << " " << i.cpu << " "
                         << i.mem << std::endl;
           }
@@ -75,9 +75,7 @@ int main() {
       vector<string> new_app_list = j["applications"].get<vector<string>>();
       for (string &i : new_app_list) {
         rpa::to_lower(i);
-        cout << i;
       }
-      cout << endl;
       size_t n_apps = app_list.size();
       if (!(n_apps == 0 && new_app_list.size() == 0)) {
         while (!app_list_lock.test_and_set(memory_order_acquire)) // spinlock

@@ -31,7 +31,7 @@ public:
     if (out == nullptr || ferror(out))
       throw std::system_error(
           std::error_code(ferror(out), std::system_category()),
-          "error opening ps");
+          "setSource error");
     // get first line to get positions
     line([this](char *token, int index) {
       for (int i = 0; i < max; ++i) {
@@ -59,14 +59,6 @@ public:
       }
 
       if (index == this->positions[command]) {
-        /*
-        int pos = 0;
-        for(int i = 0; token[i]; i++) {
-            if(token[i] == '/')
-                pos = i + 1;
-        }
-        res.command = (token + pos);
-        */
         res.command = token;
         return;
       }
