@@ -1,0 +1,16 @@
+{
+  "applications": [
+    {
+      "id": 1,
+      "applications": ["guake", "code"]
+    },
+    {
+      "id": 2,
+      "applications": ["firefox-esr", "code"]
+    },
+    {
+      "id": 2,
+      "applications": []
+    }
+  ]
+}
