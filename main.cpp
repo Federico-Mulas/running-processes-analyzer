@@ -65,6 +65,7 @@ void utilizationProber(atomic_flag &app_list_lock,
                   << endl;
           }
         }
+        parser.close(pclose);
         app_list_lock.clear(memory_order_release); // end critical section
         this_thread::sleep_for(probe_frequency);
       } else {
