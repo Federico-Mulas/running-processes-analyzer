@@ -172,4 +172,5 @@ int main(int argc, char **argv) {
     }
   }
   prober.join();
+  google::ShutDownCommandLineFlags(); // cleanup for gflags
 }
