@@ -22,7 +22,9 @@ void ps_parser::line(const std::function<void(char *, int)> &fun) const
     buff[token_len] = c;
     token_len++;
   }
-  buff[token_len] = 0;
-  fun(buff, token_n);
+  if (token_len > 0) {
+    buff[token_len] = 0;
+    fun(buff, token_n);
+  }
 }
 } // namespace rpa

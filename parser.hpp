@@ -106,8 +106,8 @@ public:
 
 private:
   /**
-   * @brief parse the next line applaying fun to each token, token are divided
-   * by ' '
+   * @brief parse the next line applaying fun to each token, token are
+   * divided by ' '
    *
    * @param fun a function to apply to each token
    */

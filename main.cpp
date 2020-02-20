@@ -1,6 +1,5 @@
 #include "./arguments.hpp"
 #include "./parser.hpp"
-#include "./utils.hpp"
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
@@ -54,13 +53,13 @@ void utilizationProber(atomic_flag &app_list_lock,
         ;
       // if the are app to monitor
       if (app_list.size() > 0) {
-        parser.setSource(popen("ps aux", "r"));
+        parser.setSource(popen("ps -Ao pid,pcpu,pmem,fname", "r"));
         while (parser) {
           info i = parser.line();
           // filter info by command
           for (const string &command : app_list) {
             // lower read command since provided command are lowered
-            if (end_with(to_lower(i.command), command))
+            if (i.command == command)
               out << i.command << " " << i.pid << " " << i.cpu << " " << i.mem
                   << endl;
           }
@@ -147,9 +146,6 @@ int main(int argc, char **argv) {
       s << curlpp::options::Url(config_url);
       j = json::parse(s.str());
       vector<string> new_app_list = j["applications"].get<vector<string>>();
-      // lower commands
-      for (string &i : new_app_list)
-        rpa::to_lower(i);
 
       size_t n_apps = app_list.size();
       // if probe thread is waiting for app to monitor and we didn't received
