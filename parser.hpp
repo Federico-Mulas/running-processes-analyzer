@@ -6,17 +6,27 @@
 #include <string>
 #include <system_error>
 
-namespace rpa {
+namespace rpa
+{
 
-struct info {
+struct info
+{
   unsigned int pid;
   float cpu;
   float mem;
   std::string command;
 };
 
-class ps_parser {
-  enum positions { pid, cpu, mem, command, max };
+class ps_parser
+{
+  enum positions
+  {
+    pid,
+    cpu,
+    mem,
+    command,
+    max
+  };
 
   FILE *out;
   static const size_t buffer_size = 1024;
@@ -26,7 +36,8 @@ class ps_parser {
 public:
   ps_parser() {}
 
-  void setSource(FILE *file) {
+  void setSource(FILE *file)
+  {
     out = file;
     if (out == nullptr || ferror(out))
       throw std::system_error(
@@ -34,31 +45,37 @@ public:
           "setSource error");
     // get first line to get positions
     line([this](char *token, int index) {
-      for (int i = 0; i < max; ++i) {
+      for (int i = 0; i < max; ++i)
+      {
         if (std::strcmp(token, ps_parser::monitored[i]) == 0)
           this->positions[i] = index;
       }
     });
   }
 
-  info line() {
+  info line()
+  {
     info res;
     line([this, &res](char *token, int index) {
-      if (index == this->positions[pid]) {
+      if (index == this->positions[pid])
+      {
         res.pid = std::stoi(token);
         return;
       }
-      if (index == this->positions[cpu]) {
+      if (index == this->positions[cpu])
+      {
         res.cpu = std::stof(token);
         return;
       }
 
-      if (index == this->positions[mem]) {
+      if (index == this->positions[mem])
+      {
         res.mem = std::stof(token);
         return;
       }
 
-      if (index == this->positions[command]) {
+      if (index == this->positions[command])
+      {
         res.command = token;
         return;
       }
@@ -71,13 +88,17 @@ public:
   ~ps_parser() { pclose(out); }
 
 private:
-  void line(const std::function<void(char *, int)> &fun) {
+  void line(const std::function<void(char *, int)> &fun)
+  {
     char buff[buffer_size]; // a token should never exceed 255 (path length)
     int i = 0;
     int token_n = 0;
-    for (int c = fgetc(out); c != EOF && c != '\n'; c = fgetc(out)) {
-      if (c == ' ') {
-        if (i != 0) {
+    for (int c = fgetc(out); c != EOF && c != '\n'; c = fgetc(out))
+    {
+      if (c == ' ')
+      {
+        if (i != 0)
+        {
           buff[i] = 0;
           fun(buff, token_n);
           token_n++;
