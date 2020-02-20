@@ -7,7 +7,11 @@
 #include <system_error>
 
 namespace rpa {
-
+/**
+ * @brief structure that will contain the parsed values, members are self
+ * explanatory
+ *
+ */
 struct info {
   unsigned int pid;
   float cpu;
@@ -15,22 +19,34 @@ struct info {
   std::string command;
 };
 
+/**
+ * @brief parser tailored for ps command.
+ *
+ */
 class ps_parser {
+  /**
+   * @brief enum utilized within class to enhance readability for positions
+   *
+   */
   enum positions { pid, cpu, mem, command, max };
 
-  FILE *out;
+  FILE *source;
   static const size_t buffer_size = 1024;
   int positions[max];
   static char const *monitored[max];
 
 public:
-  ps_parser() {}
-
+  /**
+   * @brief set source input, the first line is read to set positions.
+   *
+   * @param file the source input. suggested input pipe output from ps or a file
+   * for testing
+   */
   void setSource(FILE *file) {
-    out = file;
-    if (out == nullptr || ferror(out))
+    source = file;
+    if (source == nullptr || ferror(source))
       throw std::system_error(
-          std::error_code(ferror(out), std::system_category()),
+          std::error_code(ferror(source), std::system_category()),
           "setSource error");
     // get first line to get positions
     line([this](char *token, int index) {
@@ -41,8 +57,14 @@ public:
     });
   }
 
-  info line() {
+  /**
+   * @brief read the next line of of source parsing the output
+   *
+   * @return info data from the line (see \ref info struct)
+   */
+  info line() const noexcept {
     info res;
+    // parse the line elements accordingly to their type
     line([this, &res](char *token, int index) {
       if (index == this->positions[pid]) {
         res.pid = std::stoi(token);
@@ -66,33 +88,29 @@ public:
     return res;
   }
 
-  explicit operator bool() { return feof(out) == 0; }
+  /**
+   * @brief return false if the source is in a invalid state
+   *
+   * @return true if source is valid hence another line can be read
+   * @return false if reached end of file or an error occurred
+   */
+  explicit operator bool() const noexcept {
+    return ferror(source) == 0 && feof(source) == 0;
+  }
 
-  ~ps_parser() { pclose(out); }
+  ~ps_parser() {
+    // automatically close the exhausted stream
+    pclose(source);
+  }
 
 private:
-  void line(const std::function<void(char *, int)> &fun) {
-    char buff[buffer_size]; // a token should never exceed 255 (path length)
-    int i = 0;
-    int token_n = 0;
-    for (int c = fgetc(out); c != EOF && c != '\n'; c = fgetc(out)) {
-      if (c == ' ') {
-        if (i != 0) {
-          buff[i] = 0;
-          fun(buff, token_n);
-          token_n++;
-          i = 0;
-        }
-        continue;
-      }
-      buff[i] = c;
-      i++;
-    }
-    buff[i] = 0;
-    fun(buff, token_n);
-  }
+  /**
+   * @brief parse the next line applaying fun to each token, token are divided
+   * by ' '
+   *
+   * @param fun a function to apply to each token
+   */
+  void line(const std::function<void(char *, int)> &fun) const noexcept;
 };
-
-char const *ps_parser::monitored[max] = {"PID", "%CPU", "%MEM", "COMMAND"};
 } // namespace rpa
 #endif

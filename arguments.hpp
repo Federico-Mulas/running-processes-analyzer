@@ -19,6 +19,7 @@ DEFINE_string(output_file, "",
 
 inline bool file_validator(const char *, const std::string &value) {
   // empty string is the default value
+  // check if the input file actually exists
   return value == "" || std::filesystem::exists(std::filesystem::path(value));
 }
 DEFINE_validator(config_file, &file_validator);

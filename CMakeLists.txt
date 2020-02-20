@@ -15,7 +15,7 @@ find_package(CURL REQUIRED)
 find_package(Threads REQUIRED)
 find_package(gflags REQUIRED)
 
-add_executable(rpa main.cpp)
+add_executable(rpa main.cpp parser.cpp)
 
 
 target_link_libraries(rpa PRIVATE nlohmann_json::nlohmann_json ${CMAKE_THREAD_LIBS_INIT} curl curlpp gflags stdc++fs)
