@@ -98,10 +98,11 @@ public:
     return ferror(source) == 0 && feof(source) == 0;
   }
 
-  ~ps_parser() {
-    // automatically close the exhausted stream
-    pclose(source);
+  void close(const std::function<void(FILE *)> &close_f) noexcept {
+    close_f(source);
   }
+
+  ~ps_parser() {}
 
 private:
   /**

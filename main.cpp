@@ -4,6 +4,7 @@
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
+#include <csignal>
 #include <curlpp/Easy.hpp>
 #include <curlpp/Exception.hpp>
 #include <curlpp/Options.hpp>
@@ -19,6 +20,13 @@
 using json = nlohmann::json;
 using namespace std;
 using namespace rpa;
+
+// used in while guards to loop until killed
+static bool killer_variable = true;
+void signalHandler(int signum) {
+  cerr << "received signal " << signum << " terminating" << endl;
+  killer_variable = false;
+}
 
 /**
  * @brief thread function, it parse `ps aux` command and write it to ostream
@@ -41,7 +49,7 @@ void utilizationProber(atomic_flag &app_list_lock,
                        const chrono::seconds &probe_frequency, ostream &out) {
   ps_parser parser;
   try {
-    while (true) {
+    while (killer_variable) {
       while (!app_list_lock.test_and_set(memory_order_acquire)) // spinlock
         ;
       // if the are app to monitor
@@ -57,6 +65,7 @@ void utilizationProber(atomic_flag &app_list_lock,
                   << endl;
           }
         }
+        parser.close(pclose);
         app_list_lock.clear(memory_order_release); // end critical section
         this_thread::sleep_for(probe_frequency);
       } else {
@@ -73,6 +82,8 @@ void utilizationProber(atomic_flag &app_list_lock,
 }
 
 int main(int argc, char **argv) {
+  signal(SIGTERM, signalHandler); // register terminator signal
+
   // parameters parsing
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   const chrono::seconds probe_frequency(FLAGS_probe_frequency);
@@ -126,7 +137,7 @@ int main(int argc, char **argv) {
 
   json j;       // initialize json object outside to minimize allocations
   size_t i = 0; // index for navigate endpoints
-  while (true) {
+  while (killer_variable) {
     const string &config_url = endpoints[i];
     i = (i + 1) % endpoints.size(); // navigate endpoints in circular manner
     try {
@@ -161,4 +172,6 @@ int main(int argc, char **argv) {
       cerr << e.what() << endl;
     }
   }
+  prober.join();
+  google::ShutDownCommandLineFlags(); // cleanup for gflags
 }
